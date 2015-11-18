@@ -177,9 +177,6 @@
                appendBit({left: bit.left, top: bit.top}, bit.id)
             });
             socket.on('move',function(bit){
-				console.info('movemove');
-				console.info(bit);
-				console.info($('[data-id='+bit.id+']'));
                $('[data-id='+bit.id+']').css({top: bit.top, left: bit.left}); 
             });
             socket.on('delete',function(id){
