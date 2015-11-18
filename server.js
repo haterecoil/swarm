@@ -10,6 +10,7 @@ var app = http.createServer(function(req, res) {
 // Socket.io server listens to our app
 var io = require('socket.io').listen(app);
 
+// If 'bits' is an array and has only one value at index 5, the index 0-4 would be populated by null, which we do not want
 var bits = {};
 
 // Emit welcome message on connection
@@ -21,6 +22,9 @@ io.sockets.on('connection', function(socket) {
     
     socket.on('new', function(obj) {
         bits[obj.id] = {top: obj.top, left: obj.left, text: ''}
+		
+		console.log('new');
+    console.log(bits);
         socket.broadcast.emit('new',obj);
     });
     
@@ -40,8 +44,11 @@ io.sockets.on('connection', function(socket) {
     });
     
     socket.on('edit', function(obj) {
+		
         if (typeof bits[obj.id] === 'undefined') return;
         
+			console.log('edit');
+    console.log(bits);
         bits[obj.id].text = obj.text;
         socket.broadcast.emit('edit',obj);
     });
