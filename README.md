@@ -8,4 +8,4 @@
 - screen/tmux?
 
 # Notes
-It's spaghetti code for the moment. Just wanted to launch the website as a MVP.
+It's spaghetti code for the moment. Just wanted to launch the website as an MVP.
