@@ -1,5 +1,5 @@
 # TODO
-[ ] Improve everything
+- [ ] Improve everything
 
 # Installation
 - npm install
