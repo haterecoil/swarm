@@ -1,4 +1,5 @@
 # TODO
+- [ ] Clean up code / better coding style
 - [ ] Improve everything
 
 # Installation
