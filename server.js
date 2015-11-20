@@ -4,7 +4,7 @@ var http = require('http'),
 // Send index.html to all requests
 var app = http.createServer(function(req, res) {
     res.writeHead(200, 'Nothing here. You\'re on the socket port.');
-    res.end(index);
+    res.end();
 });
 
 // Socket.io server listens to our app
