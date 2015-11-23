@@ -63,10 +63,13 @@
         .bit:hover .bit_delete,
 		.bit:hover .bit_handle { display: block; }
         .bit_text { padding: 0 5px; background: white; margin: 5px; padding: 5px; border-radius: 5px; cursor: text; border: 1px solid #C5C5C5; outline: 0; }
+        .image {width: 150px;height: 150px;background-size: cover;}
+        .image img { width: auto;height: auto;max-width: 100%; max-height: 100%; }
     
     </style>
 </head>
 <body>
+
     <div id="canvas">
         
     </div>
@@ -106,21 +109,44 @@
 		function appendBit(bit,id,focus)
 		{
 			if (typeof focus == 'undefined') focus = false;
+
+            if  (  bit.text && bit.text.indexOf("data:image/") > -1 ) {
+                debugger;
+              var $bit = $($('.template-bit').html()) // or children.clone
+                .attr('data-id',id) // rather than .data() so that we can search for an id using CSS selectors
+                .attr('is-image', true)
+                .css({top: bit.top, left: bit.left})
+                .find('.bit_text')
+                    .html($(bit.text))
+                    .attr('is-image', true)
+                    .addClass('image')
+                .end()
+                .appendTo('#canvas')
+                .draggable({
+                    handle: ".bit_handle",
+                    containment: "parent",
+                    stop: function(e,ui) { // ou stop comme on veut // @todo foutre ça ailleurs
+                        socket.emit('move',{id: id, left: ui.position.left, top: ui.position.top});
+                    }
+                });  
+            } else {
+               var $bit = $($('.template-bit').html()) // or children.clone
+                .attr('data-id',id) // rather than .data() so that we can search for an id using CSS selectors
+                .css({top: bit.top, left: bit.left})
+                .find('.bit_text')
+                    .html(escapeAndNl2br(bit.text || ''))
+                .end()
+                .appendTo('#canvas')
+                .draggable({
+                    handle: ".bit_handle",
+                    containment: "parent",
+                    stop: function(e,ui) { // ou stop comme on veut // @todo foutre ça ailleurs
+                        socket.emit('move',{id: id, left: ui.position.left, top: ui.position.top});
+                    }
+                }); 
+            } 
 			
-			var $bit = $($('.template-bit').html()) // or children.clone
-				.attr('data-id',id) // rather than .data() so that we can search for an id using CSS selectors
-				.css({top: bit.top, left: bit.left})
-				.find('.bit_text')
-					.html(escapeAndNl2br(bit.text || ''))
-				.end()
-				.appendTo('#canvas')
-				.draggable({
-					handle: ".bit_handle",
-					containment: "parent",
-					stop: function(e,ui) { // ou stop comme on veut // @todo foutre ça ailleurs
-						socket.emit('move',{id: id, left: ui.position.left, top: ui.position.top});
-					}
-				});
+			
 			
 			if (focus)
 				$bit.find('.bit_text').focus()
@@ -159,6 +185,7 @@
             });
 			
 			$('#canvas').on('input','.bit_text',function(e){ // todo on input sur bit-text?
+                        
 					var $bit = $(e.target);
 					var id = $bit.closest('.bit').data('id');
 					if (typeof(editTimeouts[id]) !== 'undefined')
@@ -188,6 +215,54 @@
         });
         // @todo encodage
         // remove all
+        
+        /*
+            Image paste support
+            @author Morgan Caron
+            When a bit_text has focus and you hit paste, image are parsed.
+         */ 
+        
+        $('#canvas').bind('paste', '.bit_text', onPaste);
+
+        function onPaste(event) {
+
+            var cb = event.originalEvent.clipboardData
+            if (cb.items[0].type.indexOf('image') > -1) {
+                console.log('image');
+                var reader = new FileReader();
+                var dataAsBlob = cb.items[0].getAsFile();
+                reader.onload = function(mb) {
+
+                    $(event.target)
+                        .addClass('image')
+                        .html($(document.createElement('img'))
+                            .attr('src', this.result)
+                            .html($(document.createElement('a'))
+                                .attr("href", this.result)
+                                )
+                            )
+                        .attr('is-image', true);
+
+
+                    var $bit = $(event.target);
+                    var id = $bit.closest('.bit').data('id');
+                    if (typeof(editTimeouts[id]) !== 'undefined')
+                        clearInterval(editTimeouts[id]);
+
+                    editTimeouts[id] = setTimeout(function() {
+                        var image = true;
+                        var imageData = $(event.target).html();
+                        var plaintext = imageData;
+                        socket.emit('edit',{id: id, text: plaintext});
+                        delete editTimeouts[id];
+                    },500);
+                }
+
+                reader.readAsDataURL(dataAsBlob);
+            } else {
+                console.log('not image');           
+            }
+        }
     </script>
 </body>
 </html>
